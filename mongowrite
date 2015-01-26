@@ -1,0 +1,81 @@
+#!/usr/bin/python
+
+import datetime
+import json
+import pymongo
+import sys
+import time
+from pymongo import MongoClient
+
+def main():
+	
+	args = parseArgs()
+
+	try:
+		host = args["host"]
+	except:
+		host = "localhost"
+	
+	try:
+		port = args["port"]
+	except:
+		port = 27017
+
+	try:
+		db = args["db"]
+		collection = args["collection"]
+	except:
+		print "ERROR: Database and Collection are required arguments"
+		sys.exit(-1)
+
+	client = MongoClient(host, port)
+	db = client[db]
+	collection = db[collection]
+
+	data = args["data"]	
+	post_id = collection.insert(data)
+
+def parseArgs():
+	args = dict()
+	data = dict()
+	iterargs = iter(sys.argv)
+	next(iterargs)
+	for arg in iterargs:
+		if arg == "--help":
+			usage()
+			sys.exit(2)
+		elif arg == "-host":
+			args["host"] = next(iterargs)
+		elif arg == "-port":
+			args["port"] = next(iterargs)
+		elif arg == "-db":
+			args["db"] = next(iterargs)
+		elif arg == "-coll":
+			args["collection"] = next(iterargs)
+		else:
+			pair = arg.split(",")
+			if len(pair) == 2:
+				data[pair[0]] = pair[1]
+			else:
+				print "Incorrect syntax, use --help for usage"
+				sys.exit(-1)
+	
+	args["data"] = data
+	return args
+
+def usage():
+	print
+	print "Usage: mongowrite [-host HOSTNAME] [-port PORT] [-db DATABASE] [-coll COLLECTION] [-date] [DATA]..."
+	print
+	print "Insert data into a MongoDB database"
+	print 
+	print "\t-coll\tWhich collection to insert that data into"
+	print "\t-date\tAdd the current date/time to the data"
+	print "\t-db\tWhich database to use"
+	print "\t-host\tHost on which MongoDB is located (default: 27017)"
+	print "\t-port\tPort at which MongoDB can be reached (default: localhost)"
+
+
+
+if __name__ == '__main__':
+	main()
